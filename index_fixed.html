@@ -1,0 +1,1331 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0c10" />
+  <title>일본 3박 4일 여행일정</title>
+
+  <style>
+    :root{
+      --bg: #0b0c10;
+      --surface: rgba(255,255,255,.06);
+      --surface2: rgba(255,255,255,.10);
+      --border: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --accent: #7aa2ff;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius: 22px;
+      --fs: 18px;
+      --lh: 1.65;
+      --max: 1100px;
+
+      /* viewer bg */
+      --viewer-img: none;
+    }
+
+    :root[data-theme="light"]{
+      --bg: #f5f7fb;
+      --surface: rgba(0,0,0,.04);
+      --surface2: rgba(0,0,0,.06);
+      --border: rgba(0,0,0,.12);
+      --text: rgba(0,0,0,.88);
+      --muted: rgba(0,0,0,.60);
+      --accent: #1e5eff;
+      --shadow: 0 18px 45px rgba(0,0,0,.14);
+    }
+
+    *{ box-sizing: border-box; }
+    html{ -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR","Apple SD Gothic Neo",sans-serif;
+      font-size: var(--fs);
+      line-height: var(--lh);
+    }
+
+    a{ color: var(--accent); text-decoration: none; }
+    button{ font: inherit; color: inherit; }
+    :focus-visible{
+      outline: 3px solid rgba(122,162,255,.55);
+      outline-offset: 2px;
+      border-radius: 12px;
+    }
+
+    /* ===== Layout ===== */
+    .wrap{
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: calc(18px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom));
+      min-height: 100dvh;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width: 240px;
+    }
+    h1{
+      margin:0;
+      font-size: 1.22em;
+      letter-spacing: -.02em;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: .95em;
+      font-weight: 700;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:center;
+    }
+    .chip{
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 999px;
+      padding: 10px 12px;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      font-weight: 900;
+    }
+    .chip:active{ transform: translateY(1px); }
+
+    /* ===== Stage: landing/viewer crossfade ===== */
+    .stage{
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      border-radius: var(--radius);
+    }
+
+    .landing, .viewer{
+      position:absolute;
+      inset:0;
+      border-radius: var(--radius);
+      overflow:hidden;
+      transition: opacity .28s ease, transform .28s ease;
+      will-change: opacity, transform;
+    }
+
+    .landing{
+      opacity:1;
+      transform:none;
+      pointer-events:auto;
+    }
+    .landing.is-hidden{
+      opacity:0;
+      transform: translateY(-10px);
+      pointer-events:none;
+    }
+
+    .viewer{
+      opacity:0;
+      transform: translateY(10px);
+      pointer-events:none;
+    }
+    .viewer.active{
+      opacity:1;
+      transform:none;
+      pointer-events:auto;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .landing, .viewer{ transition: none !important; }
+    }
+
+    /* ===== Part1: 3 blocks fill screen ===== */
+    .grid{
+      height: 100%;
+      display:grid;
+      gap: 14px;
+    }
+    @media (max-width: 819px){
+      .grid{
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(3, 1fr);
+      }
+    }
+    @media (min-width: 820px){
+      .grid{
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: 1fr;
+      }
+    }
+
+    /* ===== Plan Tile ===== */
+    .plan-tile{
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      padding: 0;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      background: transparent;
+      text-align: left;
+      height: 100%;
+      min-height: 0;
+      isolation: isolate; /* overlay stacking 안정 */
+    }
+
+    /* 실제 이미지(동일 이미지 재사용을 위해 img 태그 사용) */
+    .tile-bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      object-position: center;
+      transform: scale(1.18);
+      filter: blur(18px) saturate(1.10) contrast(1.06);
+      opacity: .95;
+      z-index: 0;
+    }
+
+    /* 사진 위에 그라데이션(블러 없음) */
+    .plan-tile::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(1200px 600px at 20% 12%, rgba(255,255,255,.18), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.70));
+      opacity: .92;
+      z-index: 1;
+      pointer-events:none;
+    }
+    :root[data-theme="light"] .plan-tile::before{
+      background:
+        radial-gradient(1200px 600px at 20% 12%, rgba(255,255,255,.70), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.18), rgba(0,0,0,.18));
+      opacity: .88;
+    }
+
+    .tile-content{
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      padding: 18px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap: 14px;
+    }
+
+    .tile-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+    }
+
+    .code{
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display:grid;
+      place-items:center;
+      font-weight: 1000;
+      font-size: 1.05em;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 12px 28px rgba(0,0,0,.22);
+    }
+    :root[data-theme="light"] .code{
+      background: rgba(255,255,255,.55);
+      border: 1px solid rgba(0,0,0,.10);
+      box-shadow: 0 12px 24px rgba(0,0,0,.10);
+    }
+
+    .arrow{
+      font-weight: 950;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      padding: 10px 12px;
+      border-radius: 999px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      white-space: nowrap;
+      box-shadow: 0 12px 28px rgba(0,0,0,.18);
+    }
+    :root[data-theme="light"] .arrow{
+      background: rgba(255,255,255,.68);
+      border: 1px solid rgba(0,0,0,.10);
+      box-shadow: 0 12px 24px rgba(0,0,0,.10);
+    }
+
+    /* ✅ 글자 선명하게: 텍스트 뒤 '그라데이션 글래스 패널' */
+    .tile-main{
+      position: relative;
+      padding: 14px 14px 12px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(0,0,0,.32));
+      border: 1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    :root[data-theme="light"] .tile-main{
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.62));
+      border: 1px solid rgba(0,0,0,.10);
+    }
+
+    .tile-title{
+      margin:0;
+      font-size: 1.14em;
+      font-weight: 1000;
+      letter-spacing: -.02em;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+      overflow: hidden;
+      text-shadow: 0 10px 26px rgba(0,0,0,.35);
+    }
+    .tile-desc{
+      margin: 8px 0 0;
+      color: rgba(255,255,255,.86);
+      font-weight: 800;
+      font-size: .98em;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      text-shadow: 0 10px 24px rgba(0,0,0,.28);
+    }
+    :root[data-theme="light"] .tile-title,
+    :root[data-theme="light"] .tile-desc{
+      text-shadow:none;
+    }
+    :root[data-theme="light"] .tile-desc{
+      color: rgba(0,0,0,.66);
+    }
+
+    .tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 9px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      font-size: .92em;
+      font-weight: 900;
+      line-height: 1.25;
+      color: rgba(255,255,255,.90);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    :root[data-theme="light"] .tag{
+      border: 1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.65);
+      color: rgba(0,0,0,.68);
+    }
+
+    @media (hover:hover){
+      .plan-tile{
+        transition: transform .16s ease, box-shadow .16s ease;
+      }
+      .plan-tile:hover{
+        transform: translateY(-2px);
+        box-shadow: 0 22px 70px rgba(0,0,0,.60);
+      }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .plan-tile{ transition:none !important; }
+    }
+
+    /* ===== Viewer (Part2) ===== */
+    .viewer{
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      background: transparent;
+    }
+
+    /* ✅ 클릭한 블럭의 '같은 사진'을 선명 배경으로 */
+    .viewer::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image:
+        radial-gradient(1200px 700px at 15% 10%, rgba(255,255,255,.14), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.82)),
+        var(--viewer-img);
+      background-size: cover;
+      background-position: center;
+      transform: scale(1.02);
+      filter: saturate(1.05) contrast(1.06); /* 선명 느낌 */
+      opacity: 1;
+      transition: opacity .26s ease;
+      pointer-events:none;
+    }
+    .viewer.bg-fade::before{ opacity: 0; }
+
+    :root[data-theme="light"] .viewer::before{
+      background-image:
+        radial-gradient(1200px 700px at 15% 10%, rgba(255,255,255,.75), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.25)),
+        var(--viewer-img);
+      filter: saturate(1.02) contrast(1.02);
+    }
+
+    .viewer-inner{
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display:flex;
+      flex-direction:column;
+      min-height: 0;
+    }
+
+    .viewer-topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      flex-wrap:wrap;
+    }
+    :root[data-theme="light"] .viewer-topbar{
+      background: rgba(255,255,255,.70);
+    }
+
+    .back{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.10);
+      padding: 10px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-weight: 950;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    :root[data-theme="light"] .back{
+      background: rgba(255,255,255,.80);
+    }
+
+    /* viewer 안에서 A/B/C 전환(페이드) */
+    .switcher{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      overflow:auto;
+      padding: 2px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    :root[data-theme="light"] .switcher{
+      background: rgba(255,255,255,.75);
+    }
+
+    .sw{
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 10px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-weight: 1000;
+      white-space: nowrap;
+      color: var(--text);
+    }
+    .sw[aria-pressed="true"]{
+      background: rgba(255,255,255,.16);
+      border-color: rgba(255,255,255,.18);
+      box-shadow: 0 0 0 3px rgba(122,162,255,.18);
+    }
+    :root[data-theme="light"] .sw[aria-pressed="true"]{
+      background: rgba(0,0,0,.05);
+      border-color: rgba(0,0,0,.10);
+      box-shadow: 0 0 0 3px rgba(30,94,255,.16);
+    }
+
+    .viewer-title{
+      width: 100%;
+      font-weight: 1000;
+      letter-spacing: -.02em;
+      color: var(--text);
+      opacity: .95;
+    }
+
+    .viewer-body{
+      flex:1;
+      min-height:0;
+      overflow:auto;
+      padding: 14px;
+    }
+
+    /* ===== Plan content ===== */
+    .plan{ display:none; }
+    .plan.active{
+      display:block;
+      animation: fadeUp .24s ease both;
+    }
+
+    @keyframes fadeUp{
+      from{ opacity:0; transform: translateY(10px); }
+      to{ opacity:1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .plan.active{ animation:none !important; }
+      .viewer::before{ transition:none !important; }
+    }
+
+    .plan-head{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 14px 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    :root[data-theme="light"] .plan-head{
+      background: rgba(255,255,255,.78);
+    }
+
+    .plan-head h2{
+      margin:0;
+      font-size: 1.12em;
+      font-weight: 1000;
+    }
+    .plan-head p{
+      margin:0;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: .95em;
+    }
+
+    .day{
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow:hidden;
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      margin-top: 12px;
+    }
+    :root[data-theme="light"] .day{
+      background: rgba(255,255,255,.78);
+    }
+
+    details{ border-radius: 18px; }
+    summary{
+      list-style:none;
+      cursor:pointer;
+      padding: 14px 14px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      background: rgba(255,255,255,.06);
+    }
+    :root[data-theme="light"] summary{ background: rgba(255,255,255,.70); }
+    summary::-webkit-details-marker{ display:none; }
+
+    .sum-left{
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .day-title{
+      font-weight: 1000;
+      letter-spacing: -.02em;
+    }
+    .day-sub{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: .95em;
+    }
+    .stars{
+      font-weight: 1000;
+      letter-spacing: .08em;
+      white-space: nowrap;
+      opacity: .95;
+      color: var(--text);
+    }
+
+    .content{
+      padding: 0 14px 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .block{
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+    }
+    .label{
+      font-weight: 1000;
+      margin-bottom: 8px;
+    }
+
+    /* ✅ 관광지 클릭(구글지도): 큰 터치칩 */
+    .places{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+    }
+    .place-link{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      font-weight: 950;
+      color: var(--text);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .place-link::after{
+      content:"↗";
+      opacity: .85;
+      font-weight: 1000;
+    }
+    :root[data-theme="light"] .place-link{
+      border: 1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.75);
+      color: rgba(0,0,0,.78);
+    }
+
+    ul{
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .note{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.08);
+      color: var(--muted);
+      font-weight: 800;
+      font-size: .95em;
+    }
+    :root[data-theme="light"] .note{
+      background: rgba(255,255,255,.82);
+    }
+
+    /* ===== Mobile (iPhone/Chrome/Safari WebKit) 최적화 ===== */
+    @media (max-width: 520px){
+      /* 상단 여백 조금 줄이고 안전영역(safe-area) 반영 */
+      .wrap{
+        padding: calc(14px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom));
+        gap: 10px;
+      }
+
+      /* 메인 3블럭: 글자 잘림 방지(패딩/폰트/태그 조정) */
+      .grid{ gap: 12px; }
+      .tile-content{ padding: 14px; gap: 12px; }
+      .tile-main{ padding: 12px 12px 10px; }
+      .tags{ display:none; } /* 모바일에서는 공간 확보 */
+      .code{ width: 44px; height: 44px; border-radius: 14px; }
+      .arrow{ padding: 9px 11px; }
+      .tile-title{ font-size: 1.08em; }
+      .tile-desc{ font-size: .95em; }
+
+      /* 일정(Details) 요약: 별점이 길어도 왼쪽 텍스트가 세로로 찌그러지지 않게 */
+      summary{
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .stars{
+        width: 100%;
+        text-align: right;
+        white-space: normal;
+        letter-spacing: .04em;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">
+        <h1>일본 3박 4일 여행일정</h1>
+      </div>
+
+      <div class="actions" aria-label="보기 설정">
+        <button class="chip" id="fontPlus" type="button">글자＋</button>
+        <button class="chip" id="fontMinus" type="button">글자－</button>
+        <button class="chip" id="theme" type="button">🌙/☀️</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <!-- ============ LANDING (Part1) ============ -->
+      <section class="landing" id="landing" aria-label="일정 선택">
+        <div class="grid">
+
+          <!-- A -->
+          <button class="plan-tile"
+            type="button"
+            data-plan="A"
+            aria-label="플랜 A: 나고야 + 시즈오카 일정 보기">
+            <img class="tile-bg" alt="" aria-hidden="true" loading="eager" fetchpriority="high"
+              src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/10/8f/78/d5/photo8jpg.jpg?w=1200&h=700&s=1" />
+            <div class="tile-content">
+              <div class="tile-top">
+                <div class="code">A</div>
+                <div class="arrow">일정 보기 →</div>
+              </div>
+
+              <div class="tile-main">
+                <p class="tile-title">나고야 + 시즈오카</p>
+                <p class="tile-desc">도심 적응 + 후지산·해안  + 전통/휴식 </p>
+                <div class="tags" aria-hidden="true">
+                  <span class="tag">3박 4일</span>
+                  <span class="tag">후지산/해안</span>
+                  <span class="tag">도심 맛집</span>
+                </div>
+              </div>
+            </div>
+          </button>
+
+          <!-- B -->
+          <button class="plan-tile"
+            type="button"
+            data-plan="B"
+            aria-label="플랜 B: 가나자와 일정 보기">
+            <img class="tile-bg" alt="" aria-hidden="true" loading="eager" fetchpriority="high"
+              src="https://japanculturalexpo.bunka.go.jp/en/article/route/202312/assets/img/main.jpg" />
+            <div class="tile-content">
+              <div class="tile-top">
+                <div class="code">B</div>
+                <div class="arrow">일정 보기 →</div>
+              </div>
+
+              <div class="tile-main">
+                <p class="tile-title">가나자와 (이시카와) 올인</p>
+                <p class="tile-desc">콤팩트 도시형: 시장 + 전통거리 + 정원 + (온천/공예)</p>
+                <div class="tags" aria-hidden="true">
+                  <span class="tag">3박 4일</span>
+                  <span class="tag">전통거리</span>
+                  <span class="tag">정원/휴식</span>
+                </div>
+              </div>
+            </div>
+          </button>
+
+          <!-- C -->
+          <button class="plan-tile"
+            type="button"
+            data-plan="C"
+            aria-label="플랜 C: 홋카이도 일정 보기">
+            <img class="tile-bg" alt="" aria-hidden="true" loading="eager" fetchpriority="high"
+              src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/15/af/0e/65/hokkaido.jpg?w=900&h=500&s=1" />
+            <div class="tile-content">
+              <div class="tile-top">
+                <div class="code">C</div>
+                <div class="arrow">일정 보기 →</div>
+              </div>
+
+              <div class="tile-main">
+                <p class="tile-title">홋카이도 (삿포로 거점)</p>
+                <p class="tile-desc">삿포로 + 오타루 감성 + 온천/실내 대체(날씨 대비)</p>
+                <div class="tags" aria-hidden="true">
+                  <span class="tag">3박 4일</span>
+                  <span class="tag">오타루 운하</span>
+                  <span class="tag">온천</span>
+                </div>
+              </div>
+            </div>
+          </button>
+
+        </div>
+      </section>
+
+      <!-- ============ VIEWER (Part2) ============ -->
+      <section class="viewer" id="viewer" aria-label="일정 상세 보기" aria-hidden="true">
+        <div class="viewer-inner">
+          <div class="viewer-topbar">
+            <button class="back" id="back" type="button">← 일정 선택</button>
+
+            <div class="switcher" role="group" aria-label="플랜 전환">
+              <button class="sw" data-plan="A" aria-pressed="false">A 나고야+시즈오카</button>
+              <button class="sw" data-plan="B" aria-pressed="false">B 가나자와</button>
+              <button class="sw" data-plan="C" aria-pressed="false">C 홋카이도</button>
+            </div>
+
+            <div class="viewer-title" id="viewerTitle">플랜</div>
+          </div>
+
+          <div class="viewer-body">
+
+            <!-- Plan A -->
+            <div class="plan" id="planA">
+              <div class="plan-head">
+                <h2>플랜 A — 나고야 + 시즈오카</h2>
+                <p>도심 + 후지산/해안 + Day3 전통/휴식 선택</p>
+              </div>
+
+              <div class="day">
+                <details open>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 1: 나고야 도착 + 도심 적응</div>
+                      <div class="day-sub">무리 없는 도심 루트 + 먹거리 시작</div>
+                    </div>
+                    <div class="stars">★★★★★</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">거점 (클릭하면 지도 열림)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E5%90%8D%E5%8F%A4%E5%B1%8B%E9%A7%85">나고야역(메이에키)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E9%A0%88%E5%95%86%E5%BA%97%E8%A1%97">오스 상점가</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E6%A0%84%20%E5%90%8D%E5%8F%A4%E5%B1%8B">사카에(栄)</a>
+                      </div>
+                    </div>
+
+                    <div class="block">
+                      <div class="label">중점</div>
+                      <ul>
+                        <li>먹거리: 나고야메시(미소카츠/테바사키/키시멘 중 1)</li>
+                        <li>사진: 오스 거리 스냅 + 사카에 야경</li>
+                      </ul>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <div class="day">
+                <details>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 2: 시즈오카 후지산·해안 </div>
+                      <div class="day-sub">날씨 변수 </div>
+                    </div>
+                    <div class="stars">★★★★☆</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">거점 (클릭하면 지도 열림)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E6%97%A5%E6%9C%AC%E5%B9%B3">니혼다이라(日本平)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E4%B8%89%E4%BF%9D%E6%9D%BE%E5%8E%9F">미호노마쓰바라(三保松原)</a>
+                      </div>
+                    </div>
+
+                    <div class="block">
+                      <div class="label">중점</div>
+                      <ul>
+                        <li>풍경/사진: 후지산 + 바다(오전~정오 추천)</li>
+                        <li>먹거리: 시즈오카 오뎅 / 우나기 / 녹차 디저트 + 카페 휴식</li>
+                      </ul>
+                      <div class="note">운영 팁: “후지산은 맑은 날로 날짜 스왑 가능하게 구성 권장”</div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <div class="day">
+                <details>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 3: 근교(전통) 또는 시내 여유</div>
+                      <div class="day-sub">컨디션/취향에 따라 옵션 선택</div>
+                    </div>
+                    <div class="stars">옵션A ★★★★☆ / 옵션B ★★★★★</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">옵션 A (사진/전통)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E4%B8%89%E7%94%BA%E7%AD%8B%20%E9%AB%98%E5%B1%B1">다카야마 옛거리(三町筋)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E7%99%BD%E5%B7%9D%E9%83%B7">시라카와고(白川郷)</a>
+                      </div>
+                    </div>
+
+                    <div class="block">
+                      <div class="label">옵션 B (할머니 컨디션 우선)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E7%86%B1%E7%94%B0%E7%A5%9E%E5%AE%AE">아쓰타신궁(熱田神宮)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E5%90%8D%E5%8F%A4%E5%B1%8B%E5%9F%8E">나고야성(名古屋城)</a>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <div class="day">
+                <details>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 4: 귀국</div>
+                      <div class="day-sub">기념품 + 공항 쇼핑/식사</div>
+                    </div>
+                    <div class="stars">★★★★★</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">거점 (클릭하면 지도 열림)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E5%90%8D%E5%8F%A4%E5%B1%8B%E9%A7%85">나고야역</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E4%B8%AD%E9%83%A8%E5%9B%BD%E9%9A%9B%E7%A9%BA%E6%B8%AF%20%E3%82%BB%E3%83%B3%E3%83%88%E3%83%AC%E3%82%A2">센트레아(중부국제공항)</a>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            <!-- Plan B -->
+            <div class="plan" id="planB">
+              <div class="plan-head">
+                <h2>플랜 B — 가나자와(이시카와) 올인</h2>
+                <p>이동 짧고 결과물 확실(시장/전통거리/정원 + 온천/공예 선택)</p>
+              </div>
+
+              <div class="day">
+                <details open>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 1: 도착 + 시장 + 전통 거리</div>
+                      <div class="day-sub">시장 먹방 + 전통 거리 스냅</div>
+                    </div>
+                    <div class="stars">★★★★★</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">거점 (클릭하면 지도 열림)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E8%BF%91%E6%B1%9F%E7%94%BA%E5%B8%82%E5%A0%B4">오미초시장(近江町市場)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E3%81%B2%E3%81%8C%E3%81%97%E8%8C%B6%E5%B1%8B%E8%A1%97">히가시차야가이(ひがし茶屋街)</a>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <div class="day">
+                <details>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 2: 겐로쿠엔 + 성/미술관(휴식형)</div>
+                      <div class="day-sub">정원 산책 + 가벼운 관람</div>
+                    </div>
+                    <div class="stars">★★★★★</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">거점 (클릭하면 지도 열림)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E5%85%BC%E5%85%AD%E5%9C%92">겐로쿠엔(兼六園)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E9%87%91%E6%B2%A2%E5%9F%8E%E5%85%AC%E5%9C%92">가나자와성 공원(金沢城公園)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E9%87%91%E6%B2%A221%E4%B8%96%E7%B4%80%E7%BE%8E%E8%A1%93%E9%A4%A8">21세기 미술관</a>
+                      </div>
+                    </div>
+                    <div class="block">
+                      <div class="label">중점</div>
+                      <ul>
+                        <li>풍경/사진: 정원 풍경(걷기 강도 조절 쉬움)</li>
+                        <li>먹거리: 카페/화과자(달달한 휴식)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <div class="day">
+                <details>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 3: 온천(휴양) 또는 공예·거리 디테일</div>
+                      <div class="day-sub">컨디션/날씨에 따라 선택</div>
+                    </div>
+                    <div class="stars">옵션A ★★★★★ / 옵션B ★★★★☆</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">옵션 A (휴양/할머니 최적)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E5%8A%A0%E8%B3%80%E6%B8%A9%E6%B3%89%E9%83%B7">가가온천(加賀温泉郷)</a>
+                      </div>
+                    </div>
+                    <div class="block">
+                      <div class="label">옵션 B (문화/사진)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E9%95%B7%E7%94%BA%E6%AD%A6%E5%AE%B6%E5%B1%8B%E6%95%B7%E8%B7%A1">나가마치(長町武家屋敷跡)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E9%87%91%E6%B2%A2%20%E9%87%91%E7%AE%94%20%E4%BD%93%E9%A8%93">금박 체험</a>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <div class="day">
+                <details>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 4: 귀국</div>
+                      <div class="day-sub">역 주변 쇼핑 + 이동 최소화</div>
+                    </div>
+                    <div class="stars">★★★★★</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">거점 (클릭하면 지도 열림)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E9%87%91%E6%B2%A2%E9%A7%85">가나자와역(金沢駅)</a>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            <!-- Plan C -->
+            <div class="plan" id="planC">
+              <div class="plan-head">
+                <h2>플랜 C — 홋카이도(삿포로 거점 + 오타루 + 온천/자연)</h2>
+                <p>도심 + 오타루 감성 + 온천/실내 대체로 안정 운영</p>
+              </div>
+
+              <div class="day">
+                <details open>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 1: 삿포로 도착 + 도심 산책</div>
+                      <div class="day-sub">평지 위주 + 무리 없는 동선</div>
+                    </div>
+                    <div class="stars">★★★★★</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">거점 (클릭하면 지도 열림)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E6%9C%AD%E5%B9%8C%E9%A7%85">삿포로역(札幌駅)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E9%80%9A%E5%85%AC%E5%9C%92">오도리공원(大通公園)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E3%81%99%E3%81%99%E3%81%8D%E3%81%AE">스스키노(すすきの)</a>
+                      </div>
+                    </div>
+                    <div class="block">
+                      <div class="label">중점</div>
+                      <ul>
+                        <li>먹거리: 라멘/스프카레(줄 짧은 곳)</li>
+                        <li>사진: 도심 야경/거리 스냅</li>
+                      </ul>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <div class="day">
+                <details>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 2: 오타루 감성(운하 + 카페)</div>
+                      <div class="day-sub">짧은 이동 대비 만족도 높음</div>
+                    </div>
+                    <div class="stars">★★★★★</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">거점 (클릭하면 지도 열림)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E6%A8%BD%E9%81%8B%E6%B2%B3">오타루 운하(小樽運河)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E5%A0%BA%E7%94%BA%E9%80%9A%E3%82%8A%20%E5%B0%8F%E6%A8%BD">사카이마치 거리(堺町通り)</a>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <div class="day">
+                <details>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 3: 온천/휴양 or 실내 대체(날씨 대비)</div>
+                      <div class="day-sub">컨디션 안정 + 날씨 리스크 대응</div>
+                    </div>
+                    <div class="stars">옵션A ★★★★★ / 옵션B ★★★★☆</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">옵션 A (온천 휴양)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E5%AE%9A%E5%B1%B1%E6%B8%93%E6%B8%A9%E6%B3%89">조잔케이(定山渓温泉)</a>
+                      </div>
+                    </div>
+                    <div class="block">
+                      <div class="label">옵션 B (실내/시장/백화점)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E4%BA%8C%E6%9D%A1%E5%B8%82%E5%A0%B4">니조시장(二条市場)</a>
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E6%9C%AD%E5%B9%8C%E9%A7%85">삿포로역 주변</a>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <div class="day">
+                <details>
+                  <summary>
+                    <div class="sum-left">
+                      <div class="day-title">Day 4: 귀국</div>
+                      <div class="day-sub">기념품 + 공항 쇼핑/식사</div>
+                    </div>
+                    <div class="stars">★★★★★</div>
+                  </summary>
+                  <div class="content">
+                    <div class="block">
+                      <div class="label">거점 (클릭하면 지도 열림)</div>
+                      <div class="places">
+                        <a class="place-link" target="_blank" rel="noopener"
+                          href="https://www.google.com/maps/search/?api=1&query=%E6%96%B0%E5%8D%83%E6%AD%B3%E7%A9%BA%E6%B8%AF">신치토세 공항(新千歳空港)</a>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+
+      // ===== Font size (persist) =====
+      const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+      const setFont = (px) => {
+        const v = clamp(px, 16, 28);
+        root.style.setProperty("--fs", v + "px");
+        localStorage.setItem("fontPx", String(v));
+      };
+      const savedFont = Number(localStorage.getItem("fontPx"));
+      if (!Number.isNaN(savedFont) && savedFont) setFont(savedFont);
+
+      document.getElementById("fontPlus").addEventListener("click", () => {
+        const cur = parseInt(getComputedStyle(root).getPropertyValue("--fs")) || 18;
+        setFont(cur + 1);
+      });
+      document.getElementById("fontMinus").addEventListener("click", () => {
+        const cur = parseInt(getComputedStyle(root).getPropertyValue("--fs")) || 18;
+        setFont(cur - 1);
+      });
+
+      // ===== Theme (persist) =====
+      const applyTheme = (t) => {
+        if (t === "light" || t === "dark") {
+          root.setAttribute("data-theme", t);
+          localStorage.setItem("theme", t);
+        } else {
+          root.removeAttribute("data-theme");
+          localStorage.removeItem("theme");
+        }
+      };
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme) applyTheme(savedTheme);
+
+      document.getElementById("theme").addEventListener("click", () => {
+        const cur = root.getAttribute("data-theme");
+        if (!cur) applyTheme("dark");       // 기본 -> 다크
+        else if (cur === "dark") applyTheme("light"); // 다크 -> 라이트
+        else applyTheme("");                // 라이트 -> 기본
+      });
+
+      // ===== Part2: viewer open/close + background reuse + fade =====
+      const landing = document.getElementById("landing");
+      const viewer = document.getElementById("viewer");
+      const back = document.getElementById("back");
+      const viewerTitle = document.getElementById("viewerTitle");
+
+      const planEls = {
+        A: document.getElementById("planA"),
+        B: document.getElementById("planB"),
+        C: document.getElementById("planC"),
+      };
+
+      const tileByPlan = {};
+      document.querySelectorAll(".plan-tile").forEach(tile => {
+        tileByPlan[tile.dataset.plan] = tile;
+      });
+
+      const switchBtns = Array.from(document.querySelectorAll(".sw"));
+
+      function titleFor(plan){
+        return (plan === "A") ? "플랜 A — 나고야 + 시즈오카"
+          : (plan === "B") ? "플랜 B — 가나자와"
+          : (plan === "C") ? "플랜 C — 홋카이도"
+          : "플랜";
+      }
+
+      // 타일에서 실제 로드된 이미지 URL을 가져와 viewer 배경으로 재사용 (동일 사진 보장)
+      function getTileImageURL(plan){
+        const tile = tileByPlan[plan];
+        const img = tile?.querySelector("img.tile-bg");
+        return (img?.currentSrc || img?.src || "").trim();
+      }
+
+      function setViewerBackground(plan, animate){
+        const url = getTileImageURL(plan);
+        if (!url) return;
+
+        if (!animate){
+          viewer.style.setProperty("--viewer-img", `url("${url}")`);
+          return;
+        }
+
+        // 배경만 살짝 페이드(모던)
+        viewer.classList.add("bg-fade");
+        window.setTimeout(() => {
+          viewer.style.setProperty("--viewer-img", `url("${url}")`);
+          requestAnimationFrame(() => viewer.classList.remove("bg-fade"));
+        }, 120);
+      }
+
+      function setActivePlan(plan, animateBg){
+        // plan content
+        Object.entries(planEls).forEach(([code, el]) => {
+          el.classList.toggle("active", code === plan);
+          if (code === plan) {
+            // 첫 Day만 open
+            const ds = el.querySelectorAll("details");
+            ds.forEach((d, i) => d.open = (i === 0));
+          }
+        });
+
+        // switcher state
+        switchBtns.forEach(btn => btn.setAttribute("aria-pressed", String(btn.dataset.plan === plan)));
+
+        // title + bg
+        viewerTitle.textContent = titleFor(plan);
+        setViewerBackground(plan, animateBg);
+      }
+
+      function openPlan(plan){
+        // viewer 배경 먼저 세팅(처음 진입은 animate 필요 없음)
+        setViewerBackground(plan, false);
+
+        // 화면 전환(페이드)
+        landing.classList.add("is-hidden");
+        viewer.classList.add("active");
+        viewer.setAttribute("aria-hidden", "false");
+
+        // content 활성화(배경은 이미 세팅했으니 animateBg=false)
+        setActivePlan(plan, false);
+
+        // 해시(공유/복귀)
+        location.hash = plan;
+
+        // 포커스 이동
+        back.focus({ preventScroll: true });
+      }
+
+      function closePlan(){
+        viewer.classList.remove("active");
+        viewer.setAttribute("aria-hidden", "true");
+        landing.classList.remove("is-hidden");
+
+        // 해시 제거(주소 뒤 # 정리)
+        history.replaceState(null, "", location.pathname + location.search);
+      }
+
+      // tile click
+      document.querySelectorAll(".plan-tile").forEach(btn => {
+        btn.addEventListener("click", () => openPlan(btn.dataset.plan));
+      });
+
+      // back
+      back.addEventListener("click", closePlan);
+
+      // viewer switcher (A/B/C)
+      switchBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const plan = btn.dataset.plan;
+          setActivePlan(plan, true);  // ✅ 배경도 페이드 전환
+          location.hash = plan;
+        });
+      });
+
+      // ESC로 닫기
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && viewer.classList.contains("active")) closePlan();
+      });
+
+      // URL로 바로 진입 (#A/#B/#C)
+      const hash = (location.hash || "").replace("#", "").toUpperCase();
+      if (hash === "A" || hash === "B" || hash === "C") openPlan(hash);
+    })();
+  </script>
+</body>
+</html>
